@@ -47,19 +47,13 @@ using osu.Framework.IO.Stores;
 using osu.Framework.Localisation;
 using Rectangle = System.Drawing.Rectangle;
 using Size = System.Drawing.Size;
+using osu.Framework.Extensions.ListExtensions;
+using osu.Framework.Lists;
 
 namespace osu.Framework.Platform
 {
-    public abstract class GameHost : IIpcHost, IDisposable
+    public abstract partial class GameHost : IIpcHost, IDisposable
     {
-        /// <summary>
-        ///     The main window of this host.
-        /// </summary>
-        public IWindow MainWindow { get; private set; }
-
-        [Obsolete("Use MainWindow", error: true)]
-        public IWindow Window => MainWindow;
-
         /// <summary>
         /// Whether <see cref="MainWindow"/> needs to be non-null for startup to succeed.
         /// </summary>
