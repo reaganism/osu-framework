@@ -19,7 +19,7 @@ namespace osu.Framework.Input
     {
         protected override ImmutableArray<InputHandler> InputHandlers => Host.AvailableInputHandlers;
 
-        public override bool HandleHoverEvents => Host.Window?.CursorInWindow.Value ?? true;
+        public override bool HandleHoverEvents => Host.MainWindow?.CursorInWindow.Value ?? true;
 
         protected internal override bool ShouldBeAlive => true;
 
@@ -38,15 +38,15 @@ namespace osu.Framework.Input
                     var mouse = mousePositionChange.State.Mouse;
 
                     // confine cursor
-                    if (Host.Window != null)
+                    if (Host.MainWindow != null)
                     {
                         RectangleF? cursorConfineRect = null;
-                        var clientSize = Host.Window.ClientSize;
+                        var clientSize = Host.MainWindow.ClientSize;
                         var windowRect = new RectangleF(0, 0, clientSize.Width, clientSize.Height);
 
-                        if (Host.Window.CursorState.HasFlag(CursorState.Confined))
+                        if (Host.MainWindow.CursorState.HasFlag(CursorState.Confined))
                         {
-                            cursorConfineRect = Host.Window.CursorConfineRect ?? windowRect;
+                            cursorConfineRect = Host.MainWindow.CursorConfineRect ?? windowRect;
                         }
                         else if (mouseOutsideAllDisplays(mouse.Position))
                         {
@@ -67,13 +67,13 @@ namespace osu.Framework.Input
                     // presses registered when the mouse pointer is outside the window are ignored.
                     // however, releases registered when the mouse pointer is outside the window cannot be ignored;
                     // handling them is essential to correctly handling mouse capture (only applicable when relative mode is disabled).
-                    if (buttonChange.Kind == ButtonStateChangeKind.Pressed && Host.Window?.CursorInWindow.Value == false)
+                    if (buttonChange.Kind == ButtonStateChangeKind.Pressed && Host.MainWindow?.CursorInWindow.Value == false)
                         return;
 
                     break;
 
                 case MouseScrollChangeEvent:
-                    if (Host.Window?.CursorInWindow.Value == false)
+                    if (Host.MainWindow?.CursorInWindow.Value == false)
                         return;
 
                     break;
@@ -86,21 +86,21 @@ namespace osu.Framework.Input
         {
             Point windowLocation;
 
-            switch (Host.Window.WindowMode.Value)
+            switch (Host.MainWindow.WindowMode.Value)
             {
                 case WindowMode.Windowed:
-                    windowLocation = Host.Window is ISDLWindow sdlWindow ? sdlWindow.Position : Point.Empty;
+                    windowLocation = Host.MainWindow is ISDLWindow sdlWindow ? sdlWindow.Position : Point.Empty;
                     break;
 
                 default:
-                    windowLocation = Host.Window.CurrentDisplayBindable.Value.Bounds.Location;
+                    windowLocation = Host.MainWindow.CurrentDisplayBindable.Value.Bounds.Location;
                     break;
             }
 
             int x = (int)MathF.Floor(windowLocation.X + mousePosition.X);
             int y = (int)MathF.Floor(windowLocation.Y + mousePosition.Y);
 
-            foreach (var display in Host.Window.Displays)
+            foreach (var display in Host.MainWindow.Displays)
             {
                 if (display.Bounds.Contains(x, y))
                     return false;

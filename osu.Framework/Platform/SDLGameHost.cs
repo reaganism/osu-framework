@@ -18,7 +18,7 @@ namespace osu.Framework.Platform
 {
     public abstract class SDLGameHost : GameHost
     {
-        public override bool CapsLockEnabled => (Window as ISDLWindow)?.CapsLockPressed == true;
+        public override bool CapsLockEnabled => (MainWindow as ISDLWindow)?.CapsLockPressed == true;
 
         protected SDLGameHost(string gameName, HostOptions? options = null)
             : base(gameName, options)
@@ -27,7 +27,7 @@ namespace osu.Framework.Platform
 
         protected override TextInputSource CreateTextInput()
         {
-            if (Window is ISDLWindow window)
+            if (MainWindow is ISDLWindow window)
                 return new SDLWindowTextInput(window);
 
             return base.CreateTextInput();

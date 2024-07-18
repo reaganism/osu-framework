@@ -233,7 +233,7 @@ namespace osu.Framework.Graphics.Performance
             addHeader("Mode:");
             addValue(configWindowMode.ToString());
 
-            switch (host.Window)
+            switch (host.MainWindow)
             {
                 case SDL3Window:
                     addValue(" (SDL3)");

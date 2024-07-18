@@ -20,7 +20,7 @@ namespace osu.Framework.Platform.Windows
 
         public override bool Initialize(GameHost host)
         {
-            if (host.Window is not IWindowsWindow windowsWindow)
+            if (host.MainWindow is not IWindowsWindow windowsWindow)
                 return false;
 
             window = windowsWindow;

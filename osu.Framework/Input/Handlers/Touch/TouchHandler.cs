@@ -18,7 +18,7 @@ namespace osu.Framework.Input.Handlers.Touch
             if (!base.Initialize(host))
                 return false;
 
-            if (!(host.Window is ISDLWindow window))
+            if (!(host.MainWindow is ISDLWindow window))
                 return false;
 
             Enabled.BindValueChanged(enabled =>

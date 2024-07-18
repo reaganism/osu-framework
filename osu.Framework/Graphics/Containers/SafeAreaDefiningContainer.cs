@@ -46,10 +46,10 @@ namespace osu.Framework.Graphics.Containers
         {
             base.LoadComplete();
 
-            if (usesCustomBinding || host.Window == null)
+            if (usesCustomBinding || host.MainWindow == null)
                 return;
 
-            hostSafeArea.BindTo(host.Window.SafeAreaPadding);
+            hostSafeArea.BindTo(host.MainWindow.SafeAreaPadding);
             hostSafeArea.BindValueChanged(_ => Scheduler.AddOnce(updateSafeAreaFromHost));
 
             updateSafeAreaFromHost();

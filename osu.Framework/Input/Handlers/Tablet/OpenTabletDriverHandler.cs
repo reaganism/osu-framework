@@ -52,7 +52,7 @@ namespace osu.Framework.Input.Handlers.Tablet
 
             outputMode = new AbsoluteTabletMode(this);
 
-            host.Window.Resized += () => updateOutputArea(host.Window);
+            host.MainWindow.Resized += () => updateOutputArea(host.MainWindow);
 
             AreaOffset.BindValueChanged(_ => updateTabletAndInputArea(device));
             AreaSize.BindValueChanged(_ => updateTabletAndInputArea(device));
@@ -104,7 +104,7 @@ namespace osu.Framework.Input.Handlers.Tablet
                 outputMode.Tablet = device.CreateReference();
 
                 updateTabletAndInputArea(device);
-                updateOutputArea(host.Window);
+                updateOutputArea(host.MainWindow);
             }
             else
                 tablet.Value = null;

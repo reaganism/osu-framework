@@ -52,10 +52,16 @@ namespace osu.Framework.Platform
 {
     public abstract class GameHost : IIpcHost, IDisposable
     {
-        public IWindow Window { get; private set; }
+        /// <summary>
+        ///     The main window of this host.
+        /// </summary>
+        public IWindow MainWindow { get; private set; }
+
+        [Obsolete("Use MainWindow", error: true)]
+        public IWindow Window => MainWindow;
 
         /// <summary>
-        /// Whether <see cref="Window"/> needs to be non-null for startup to succeed.
+        /// Whether <see cref="MainWindow"/> needs to be non-null for startup to succeed.
         /// </summary>
         protected virtual bool RequireWindowExists => true;
 
@@ -465,13 +471,13 @@ namespace osu.Framework.Platform
 
             frameCount++;
 
-            if (Window == null)
+            if (MainWindow == null)
             {
                 var windowedSize = Config.Get<Size>(FrameworkSetting.WindowedSize);
                 Root.Size = new Vector2(windowedSize.Width, windowedSize.Height);
             }
-            else if (Window.WindowState != WindowState.Minimised)
-                Root.Size = new Vector2(Window.ClientSize.Width, Window.ClientSize.Height);
+            else if (MainWindow.WindowState != WindowState.Minimised)
+                Root.Size = new Vector2(MainWindow.ClientSize.Width, MainWindow.ClientSize.Height);
 
             // Ensure we maintain a valid size for any children immediately scaling by the window size
             Root.Size = Vector2.ComponentMax(Vector2.One, Root.Size);
@@ -489,7 +495,7 @@ namespace osu.Framework.Platform
 
         protected virtual void DrawFrame()
         {
-            Debug.Assert(Window != null);
+            Debug.Assert(MainWindow != null);
 
             if (Root == null)
                 return;
@@ -497,7 +503,7 @@ namespace osu.Framework.Platform
             if (ExecutionState != ExecutionState.Running)
                 return;
 
-            if (Window.WindowState == WindowState.Minimised)
+            if (MainWindow.WindowState == WindowState.Minimised)
                 return;
 
             Renderer.AllowTearing = windowMode.Value == WindowMode.Fullscreen;
@@ -524,7 +530,7 @@ namespace osu.Framework.Platform
             try
             {
                 using (drawMonitor.BeginCollecting(PerformanceCollectionType.DrawReset))
-                    Renderer.BeginFrame(new Vector2(Window.ClientSize.Width, Window.ClientSize.Height));
+                    Renderer.BeginFrame(new Vector2(MainWindow.ClientSize.Width, MainWindow.ClientSize.Height));
 
                 if (!bypassFrontToBackPass.Value)
                 {
@@ -558,7 +564,7 @@ namespace osu.Framework.Platform
                 using (drawMonitor.BeginCollecting(PerformanceCollectionType.SwapBuffer))
                     Swap();
 
-                Window.OnDraw();
+                MainWindow.OnDraw();
                 didRenderFrame = true;
             }
             finally
@@ -574,7 +580,7 @@ namespace osu.Framework.Platform
         {
             Renderer.SwapBuffers();
 
-            if (Window.GraphicsSurface.Type == GraphicsSurfaceType.OpenGL && Renderer.VerticalSync)
+            if (MainWindow.GraphicsSurface.Type == GraphicsSurfaceType.OpenGL && Renderer.VerticalSync)
                 // without waiting (i.e. glFinish), vsync is basically unplayable due to the extra latency introduced.
                 // we will likely want to give the user control over this in the future as an advanced setting.
                 Renderer.WaitUntilIdle();
@@ -586,7 +592,7 @@ namespace osu.Framework.Platform
         /// <returns>The screenshot as an <see cref="Image{TPixel}"/>.</returns>
         public async Task<Image<Rgba32>> TakeScreenshotAsync()
         {
-            if (Window == null) throw new InvalidOperationException($"{nameof(Window)} has not been set!");
+            if (MainWindow == null) throw new InvalidOperationException($"{nameof(MainWindow)} has not been set!");
 
             using (var completionEvent = new ManualResetEventSlim(false))
             {
@@ -672,7 +678,7 @@ namespace osu.Framework.Platform
             {
                 Debug.Assert(ExecutionState == ExecutionState.Stopping);
 
-                Window?.Close();
+                MainWindow?.Close();
                 threadRunner.Stop();
 
                 ExecutionState = ExecutionState.Stopped;
@@ -741,7 +747,7 @@ namespace osu.Framework.Platform
 
                 // Window creation may fail in the case of a catastrophic failure (ie. graphics driver or SDL3 level).
                 // In such cases, we want to throw here to immediately mark this renderer setup as failed.
-                if (RequireWindowExists && Window == null)
+                if (RequireWindowExists && MainWindow == null)
                 {
                     Logger.Log("Aborting startup as no window could be created.");
                     return;
@@ -752,7 +758,7 @@ namespace osu.Framework.Platform
                 // Prepare renderer (requires config).
                 Dependencies.CacheAs(Renderer);
 
-                RendererInfo = $"{Renderer.GetType().ReadableName().Replace("Renderer", "")} / {(Window?.GraphicsSurface.Type.ToString() ?? "headless")}";
+                RendererInfo = $"{Renderer.GetType().ReadableName().Replace("Renderer", "")} / {(MainWindow?.GraphicsSurface.Type.ToString() ?? "headless")}";
 
                 RegisterThread(DrawThread = new DrawThread(DrawFrame, this)
                 {
@@ -783,22 +789,22 @@ namespace osu.Framework.Platform
 
                 try
                 {
-                    if (Window != null)
+                    if (MainWindow != null)
                     {
-                        Window.Update += windowUpdate;
-                        Window.Suspended += Suspend;
-                        Window.Resumed += Resume;
-                        Window.LowOnMemory += Collect;
+                        MainWindow.Update += windowUpdate;
+                        MainWindow.Suspended += Suspend;
+                        MainWindow.Resumed += Resume;
+                        MainWindow.LowOnMemory += Collect;
 
-                        Window.ExitRequested += OnExitRequested;
-                        Window.Exited += OnExited;
-                        Window.KeymapChanged += readableKeyCombinationProvider.OnKeymapChanged;
+                        MainWindow.ExitRequested += OnExitRequested;
+                        MainWindow.Exited += OnExited;
+                        MainWindow.KeymapChanged += readableKeyCombinationProvider.OnKeymapChanged;
 
                         //we need to ensure all threads have stopped before the window is closed (mainly the draw thread
                         //to avoid GL operations running post-cleanup).
-                        Window.Exited += threadRunner.Stop;
+                        MainWindow.Exited += threadRunner.Stop;
 
-                        Window.Run();
+                        MainWindow.Run();
                     }
                     else
                     {
@@ -1010,9 +1016,9 @@ namespace osu.Framework.Platform
             try
             {
                 // Prepare window
-                Window = CreateWindow(surfaceType);
+                MainWindow = CreateWindow(surfaceType);
 
-                if (Window == null)
+                if (MainWindow == null)
                 {
                     // Can be null, usually via Headless execution.
                     if (!RequireWindowExists)
@@ -1021,11 +1027,11 @@ namespace osu.Framework.Platform
                     throw new InvalidOperationException("🖼️ Renderer could not be initialised as window creation failed.");
                 }
 
-                Window.SetupWindow(Config);
-                Window.Create();
-                Window.Title = Options.FriendlyGameName;
+                MainWindow.SetupWindow(Config);
+                MainWindow.Create();
+                MainWindow.Title = Options.FriendlyGameName;
 
-                Renderer.Initialise(Window.GraphicsSurface);
+                Renderer.Initialise(MainWindow.GraphicsSurface);
 
                 Logger.Log("🖼️ Renderer initialised!");
             }
@@ -1034,18 +1040,18 @@ namespace osu.Framework.Platform
                 Logger.Log("🖼️ Renderer initialisation failed with:");
                 Logger.Log(e.ToString());
 
-                Window?.Close();
-                Window?.Dispose();
-                Window = null;
+                MainWindow?.Close();
+                MainWindow?.Dispose();
+                MainWindow = null;
 
                 Renderer = null;
                 throw;
             }
 
-            currentDisplayMode = Window.CurrentDisplayMode.GetBoundCopy();
+            currentDisplayMode = MainWindow.CurrentDisplayMode.GetBoundCopy();
             currentDisplayMode.BindValueChanged(_ => updateFrameSyncMode());
 
-            Window.CurrentDisplayBindable.BindValueChanged(display =>
+            MainWindow.CurrentDisplayBindable.BindValueChanged(display =>
             {
                 if (Renderer is VeldridRenderer veldridRenderer)
                 {
@@ -1055,14 +1061,14 @@ namespace osu.Framework.Platform
                 }
             }, true);
 
-            IsActive.BindTo(Window.IsActive);
+            IsActive.BindTo(MainWindow.IsActive);
 
             AllowScreenSuspension.Result.BindValueChanged(e =>
             {
                 if (e.NewValue)
-                    Window.EnableScreenSuspension();
+                    MainWindow.EnableScreenSuspension();
                 else
-                    Window.DisableScreenSuspension();
+                    MainWindow.DisableScreenSuspension();
             }, true);
         }
 
@@ -1225,7 +1231,7 @@ namespace osu.Framework.Platform
         protected virtual void SetupConfig(IDictionary<FrameworkSetting, object> defaultOverrides)
         {
             if (!defaultOverrides.ContainsKey(FrameworkSetting.WindowMode))
-                defaultOverrides.Add(FrameworkSetting.WindowMode, Window?.DefaultWindowMode ?? WindowMode.Windowed);
+                defaultOverrides.Add(FrameworkSetting.WindowMode, MainWindow?.DefaultWindowMode ?? WindowMode.Windowed);
 
             Dependencies.Cache(DebugConfig = new FrameworkDebugConfigManager());
             Dependencies.Cache(Config = new FrameworkConfigManager(Storage, defaultOverrides));
@@ -1233,11 +1239,11 @@ namespace osu.Framework.Platform
             windowMode = Config.GetBindable<WindowMode>(FrameworkSetting.WindowMode);
             windowMode.BindValueChanged(mode =>
             {
-                if (Window == null)
+                if (MainWindow == null)
                     return;
 
-                if (!Window.SupportedWindowModes.Contains(mode.NewValue))
-                    windowMode.Value = Window.DefaultWindowMode;
+                if (!MainWindow.SupportedWindowModes.Contains(mode.NewValue))
+                    windowMode.Value = MainWindow.DefaultWindowMode;
             }, true);
 
             executionMode = Config.GetBindable<ExecutionMode>(FrameworkSetting.ExecutionMode);
@@ -1325,10 +1331,10 @@ namespace osu.Framework.Platform
 
         private void updateFrameSyncMode()
         {
-            if (Window == null)
+            if (MainWindow == null)
                 return;
 
-            int refreshRate = (int)MathF.Round(Window.CurrentDisplayMode.Value.RefreshRate);
+            int refreshRate = (int)MathF.Round(MainWindow.CurrentDisplayMode.Value.RefreshRate);
 
             // For invalid refresh rates let's assume 60 Hz as it is most common.
             if (refreshRate <= 0)
@@ -1379,7 +1385,7 @@ namespace osu.Framework.Platform
 
         private void setVSyncMode()
         {
-            if (Window == null) return;
+            if (MainWindow == null) return;
 
             DrawThread.Scheduler.Add(() => Renderer.VerticalSync = frameSyncMode.Value == FrameSync.VSync);
         }
@@ -1432,7 +1438,7 @@ namespace osu.Framework.Platform
             Config?.Dispose();
             DebugConfig?.Dispose();
 
-            Window?.Dispose();
+            MainWindow?.Dispose();
 
             LoadingComponentsLogger.LogAndFlush();
             Logger.FlushForShutdown();

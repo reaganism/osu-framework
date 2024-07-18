@@ -30,7 +30,7 @@ namespace osu.Framework
 {
     public abstract partial class Game : Container, IKeyBindingHandler<FrameworkAction>, IKeyBindingHandler<PlatformAction>, IHandleGlobalKeyboardInput
     {
-        public IWindow Window => Host?.Window;
+        public IWindow Window => Host?.MainWindow;
 
         public ResourceStore<byte[]> Resources { get; private set; }
 

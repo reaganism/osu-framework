@@ -406,7 +406,7 @@ namespace osu.Framework.Graphics.Performance
         {
             // Don't process frames when minimised, as the draw thread may not be running and texture uploads
             // from the graph displays will get out of hand.
-            bool isMinimised = host.Window.WindowState == WindowState.Minimised;
+            bool isMinimised = host.MainWindow.WindowState == WindowState.Minimised;
 
             if (state == FrameStatisticsMode.Full && !isMinimised)
             {

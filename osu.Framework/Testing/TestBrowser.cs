@@ -94,7 +94,7 @@ namespace osu.Framework.Testing
         [BackgroundDependencyLoader]
         private void load(Storage storage, GameHost host, AudioManager audio)
         {
-            interactive = host.Window != null;
+            interactive = host.MainWindow != null;
             config = new TestBrowserConfig(storage);
 
             audio.AddAdjustment(AdjustableProperty.Frequency, audioRateAdjust);

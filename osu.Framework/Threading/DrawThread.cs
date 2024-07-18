@@ -24,7 +24,7 @@ namespace osu.Framework.Threading
 
         protected sealed override void OnInitialize()
         {
-            var window = host.Window;
+            var window = host.MainWindow;
 
             if (window != null)
             {

@@ -75,7 +75,7 @@ namespace osu.Framework.Input.Handlers.Mouse
             if (!base.Initialize(host))
                 return false;
 
-            if (!(host.Window is ISDLWindow desktopWindow))
+            if (!(host.MainWindow is ISDLWindow desktopWindow))
                 return false;
 
             window = desktopWindow;
@@ -83,7 +83,7 @@ namespace osu.Framework.Input.Handlers.Mouse
             isActive = window.IsActive.GetBoundCopy();
             isActive.BindValueChanged(_ => updateRelativeMode());
 
-            cursorInWindow = host.Window.CursorInWindow.GetBoundCopy();
+            cursorInWindow = host.MainWindow.CursorInWindow.GetBoundCopy();
             cursorInWindow.BindValueChanged(e =>
             {
                 if (e.NewValue)
